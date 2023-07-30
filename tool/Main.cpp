@@ -101,6 +101,7 @@ int main(int Argc, char **Argv) {
     // Create a FunctionAnalysisManager and add the OpcodeListAnalysis to it:
     FunctionAnalysisManager FAM;
     FAM.registerPass([&] { return cogent::OpcodeListAnalysis(); });
+    FAM.registerPass([&] { return cogent::PredictionTableLengthAnalysis(); });
 
     // Register the module analyses:
     PassBuilder PB;

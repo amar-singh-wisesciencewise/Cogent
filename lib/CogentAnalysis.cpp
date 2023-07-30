@@ -23,6 +23,7 @@
 #include "Cogent.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Analysis/LoopInfo.h"
 
 using namespace llvm;
 
@@ -30,6 +31,10 @@ namespace cogent {
 
 // Initialize the analysis key.
 AnalysisKey OpcodeListAnalysis::Key;
+AnalysisKey PredictionTableLengthAnalysis::Key;
+
+//TODO: Current Analysis is per function change it to handle Module or all functions
+// in the moodule.
 
 bool isOpcodePresent(SmallVector<Instruction *, 0> AllInsts, unsigned Opcode)
 {
@@ -52,15 +57,41 @@ OpcodeListAnalysis::Result OpcodeListAnalysis::run(Function &F,
     return AllInsts;
 }
 
+PredictionTableLengthAnalysis::Result PredictionTableLengthAnalysis::run(Function &F,
+		FunctionAnalysisManager &AM) {
+	//Get the results of LoopAnalysis i.e. LoopInfo
+	auto &LI = AM.getResult<LoopAnalysis>(F);
+	// Structure to return the result of Analysis 
+	PredictionTableLengthAnalysis::Result res;
+	res.LoopDepth = 0;
+
+	// There are no loops in the function. Return before computing other expensive
+	// analyses.
+	if (LI.empty())
+		return (res);
+
+	// Get the Loop Depth of the function.
+	for (auto &L : LI)
+		res.LoopDepth =
+			std::max(res.LoopDepth,static_cast<int32_t>(L->getLoopDepth()));
+
+	return (res);
+}
+
 PreservedAnalyses CogentPrinterPass::run(Function &F,
                                            FunctionAnalysisManager &FAM) {
     auto &AllInsts = FAM.getResult<OpcodeListAnalysis>(F);
+    auto DepthLoop = FAM.getResult<PredictionTableLengthAnalysis>(F);
     OS << "=============================================\n";
     OS << "FEATURE1: List of all the Opcodes getting used in the project \n";
     OS << "=============================================\n";
     for (auto &All : AllInsts)
 	    OS << All->getOpcodeName() << "\n";
     OS << "=============================================\n";
+    OS << "=============================================\n";
+    OS << "FEATURE2: Depth of loops in the Project \n";
+    OS << "=============================================\n";
+    OS << "Max Loop Depth is " << DepthLoop.LoopDepth << "\n";
     return PreservedAnalyses::all();
 }
 } // namespace cogent

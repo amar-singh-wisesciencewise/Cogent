@@ -38,6 +38,22 @@ struct OpcodeListAnalysis : public llvm::AnalysisInfoMixin<OpcodeListAnalysis> {
 	static llvm::AnalysisKey Key;
 };
 
+// An analysis that traverses a function and collects the depth of nested loops.
+// Basically number of nested loops and internal branches in the innermost loop
+// will give idea about maximum entires are needed in Predication Table used
+// in FETCH stage of CPU.
+struct PredictionTableLengthAnalysis : public llvm::AnalysisInfoMixin<PredictionTableLengthAnalysis> {
+	// Result of the analysis: Depth of Prediction Table
+	struct Result{
+		int LoopDepth;
+	};
+	// Traverses the functions, collect all the instructions.
+	Result run(llvm::Function &F, llvm::FunctionAnalysisManager &FAM);
+	// A special type used by analysis passes to provide an address that
+	// identifies that particular analysis pass type.
+	static llvm::AnalysisKey Key;
+};
+
 /* ADD ALL THE ANALYSIS PASSES ABOVE */
 
 // A Pass to Traverse the Analysis Pass output and interpret and display that output

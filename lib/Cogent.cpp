@@ -31,6 +31,7 @@ using namespace llvm;
 // analyses created, so any pass can request their results.
 void registerAnalyses(FunctionAnalysisManager &FAM) {
 	FAM.registerPass([] { return cogent::OpcodeListAnalysis(); });
+	FAM.registerPass([] { return cogent::PredictionTableLengthAnalysis(); });
 }
 
 // Takes the Pass Name of a pass and check if it is the name of
