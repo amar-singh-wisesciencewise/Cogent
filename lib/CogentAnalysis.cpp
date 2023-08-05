@@ -24,6 +24,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include <deque>
 
 using namespace llvm;
 
@@ -71,10 +72,20 @@ PredictionTableLengthAnalysis::Result PredictionTableLengthAnalysis::run(Functio
 		return (res);
 
 	// Get the Loop Depth of the function.
+	std::deque<const Loop *> Worklist;
+	llvm::append_range(Worklist, LI);
+	while (!Worklist.empty()) {
+	  const auto *L = Worklist.front();
+	  res.LoopDepth =
+	      std::max(res.LoopDepth, static_cast<int32_t>(L->getLoopDepth()));
+	  Worklist.pop_front();
+	  llvm::append_range(Worklist, L->getSubLoops());
+	}
+#if 0
 	for (auto &L : LI)
 		res.LoopDepth =
 			std::max(res.LoopDepth,static_cast<int32_t>(L->getLoopDepth()));
-
+#endif
 	return (res);
 }
 
@@ -91,7 +102,8 @@ PreservedAnalyses CogentPrinterPass::run(Function &F,
     OS << "=============================================\n";
     OS << "FEATURE2: Depth of loops in the Project \n";
     OS << "=============================================\n";
-    OS << "Max Loop Depth is " << DepthLoop.LoopDepth << "\n";
+    OS << "Max Loop Depth is: " << DepthLoop.LoopDepth << "\n";
+    OS << "=============================================\n";
     return PreservedAnalyses::all();
 }
 } // namespace cogent
